@@ -1,3 +1,1 @@
-# Hi
-
-my name is Yunseo. 
+# Hi! im jihunyuk, JeonJin, geumsang. Sujin Lee, Junhan, Yunseo.
