@@ -1,3 +1,1 @@
-# JeonJin
-
-
+# JeonJin, geumsang. Sujin Lee
