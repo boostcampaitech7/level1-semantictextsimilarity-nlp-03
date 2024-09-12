@@ -1,1 +1,1 @@
-# geumsang. Sujin Lee
+# geumsang
