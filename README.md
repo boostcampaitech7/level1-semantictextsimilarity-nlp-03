@@ -1,1 +1,1 @@
-Hi! im jihunyuk
+# Hi! im jihunyuk, JeonJin, geumsang. Sujin Lee
