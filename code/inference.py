@@ -1,3 +1,5 @@
+import re
+
 import argparse
 
 import pandas as pd
@@ -59,9 +61,24 @@ class Dataloader(pl.LightningDataModule):
             data.append(outputs['input_ids'])
         return data
 
+    def preprocess_text(self, text: str):
+        # html 태그 제거
+        text = re.sub('<.*?>', '', text)
+        text = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣0-9\s.,?!:;^]', '', text)
+        # ㅎ,ㅋ,ㅠ 제거
+        text = re.sub('[ㅋㅎㅠ]+', '', text)
+        # 특수문자 중복제거
+        text = re.sub(r'([.?!,:]){2,}', r'\1', text)
+        # 공백 제거
+        text = text.strip()
+        return text
+
     def preprocessing(self, data):
         # 안쓰는 컬럼을 삭제합니다.
         data = data.drop(columns=self.delete_columns)
+
+        # 기본 텍스트 전처리
+        data[self.text_columns] = data[self.text_columns].apply(lambda x: x.apply(self.preprocess_text))
 
         # 타겟 데이터가 없으면 빈 배열을 리턴합니다.
         try:
@@ -179,7 +196,7 @@ if __name__ == '__main__':
     parser.add_argument('--dev_path', default='../data/dev.csv')
     parser.add_argument('--test_path', default='../data/dev.csv')
     parser.add_argument('--predict_path', default='../data/test.csv')
-    args = parser.parse_args(args=[])
+    args = parser.parse_args()
 
     # dataloader와 model을 생성합니다.
     dataloader = Dataloader(args.model_name, args.batch_size, args.shuffle, args.train_path, args.dev_path,
@@ -195,6 +212,9 @@ if __name__ == '__main__':
 
     # 예측된 결과를 형식에 맞게 반올림하여 준비합니다.
     predictions = list(round(float(i), 1) for i in torch.cat(predictions))
+
+    # 0 미만 5 초과의 값 clipping
+    predictions = [min(5., max(0., x)) for x in predictions]
 
     # output 형식을 불러와서 예측된 결과로 바꿔주고, output.csv로 출력합니다.
     output = pd.read_csv('../data/sample_submission.csv')
