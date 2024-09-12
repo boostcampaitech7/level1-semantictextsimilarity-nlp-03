@@ -1,1 +1,1 @@
-# Hi! im jihunyuk, JeonJin, geumsang. Sujin Lee, Junhan, Yunseo.
+# Hi! im jihunyuk, JeonJin, geumsang, Sujin Lee, Junhan, Yunseo.
