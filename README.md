@@ -1,2 +1,1 @@
-# Hi
-Junhan branch
+# Hi! im jihunyuk, JeonJin, geumsang. Sujin Lee, Junhan
