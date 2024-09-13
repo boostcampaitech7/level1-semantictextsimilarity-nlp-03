@@ -11,6 +11,9 @@ import torch
 import torchmetrics
 import pytorch_lightning as pl
 
+import datetime
+import pytz
+
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, inputs, targets=[]):
@@ -181,6 +184,12 @@ class Model(pl.LightningModule):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
         return optimizer
 
+def get_kst_now():
+    # 한국 시간대 설정
+    korea_tz = pytz.timezone('Asia/Seoul')
+    # 현재 시각을 UTC로 가져온 후, 한국 시간대로 변환
+    now = datetime.datetime.now(pytz.utc).astimezone(korea_tz)
+    return now
 
 if __name__ == '__main__':
     # 하이퍼 파라미터 등 각종 설정값을 입력받습니다
@@ -219,4 +228,5 @@ if __name__ == '__main__':
     # output 형식을 불러와서 예측된 결과로 바꿔주고, output.csv로 출력합니다.
     output = pd.read_csv('../data/sample_submission.csv')
     output['target'] = predictions
-    output.to_csv('output.csv', index=False)
+    now = get_kst_now().strftime('%m%d_%H%M')
+    output.to_csv(f'{args.model_name}_{now}_output.csv', index=False)

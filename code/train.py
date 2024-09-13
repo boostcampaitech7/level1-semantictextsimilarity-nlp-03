@@ -11,6 +11,7 @@ import transformers
 import torch
 import torchmetrics
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
 
 # seed 고정
 torch.manual_seed(0)
@@ -213,7 +214,8 @@ if __name__ == '__main__':
     model = Model(args.model_name, args.learning_rate)
 
     # gpu가 없으면 accelerator="cpu"로 변경해주세요, gpu가 여러개면 'devices=4'처럼 사용하실 gpu의 개수를 입력해주세요
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=args.max_epoch, log_every_n_steps=1)
+    wandb_logger = WandbLogger(project='sts_practice', name=f'{args.model_name}_ep{args.max_epoch}_bs{args.batch_size}')
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=args.max_epoch, log_every_n_steps=1, logger=wandb_logger)
 
     # Train part
     trainer.fit(model=model, datamodule=dataloader)
