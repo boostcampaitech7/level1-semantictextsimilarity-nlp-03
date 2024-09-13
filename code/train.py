@@ -13,6 +13,9 @@ import torchmetrics
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
+import datetime
+import pytz
+
 # seed 고정
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
@@ -190,6 +193,12 @@ class Model(pl.LightningModule):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
         return optimizer
 
+def get_kst_now():
+    # 한국 시간대 설정
+    korea_tz = pytz.timezone('Asia/Seoul')
+    # 현재 시각을 UTC로 가져온 후, 한국 시간대로 변환
+    now = datetime.datetime.now(pytz.utc).astimezone(korea_tz)
+    return now
 
 if __name__ == '__main__':
     # 하이퍼 파라미터 등 각종 설정값을 입력받습니다
@@ -222,4 +231,5 @@ if __name__ == '__main__':
     trainer.test(model=model, datamodule=dataloader)
 
     # 학습이 완료된 모델을 저장합니다.
-    torch.save(model, 'model.pt')
+    now = get_kst_now().strftime('%m%d_%H%M')
+    torch.save(model, f'{args.model_name}_ep{args.max_epoch}_bs{args.batch_size}_{now}.pt')
