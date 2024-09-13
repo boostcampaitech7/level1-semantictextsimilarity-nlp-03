@@ -231,5 +231,6 @@ if __name__ == '__main__':
     trainer.test(model=model, datamodule=dataloader)
 
     # 학습이 완료된 모델을 저장합니다.
+    model_name_wo_slash = '_'.join(args.model_name.split())
     now = get_kst_now().strftime('%m%d_%H%M')
     torch.save(model, f'{args.model_name}_ep{args.max_epoch}_bs{args.batch_size}_{now}.pt')
