@@ -8,7 +8,7 @@ class STSModel(nn.Module):
         super().__init__()
         self.plm_name = plm_name
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model_name_or_path=plm_name, num_labels=1, use_auth_token=False
+            pretrained_model_name_or_path=self.plm_name, num_labels=1, use_auth_token=False
         )
 
     def forward(self, x):
@@ -16,14 +16,15 @@ class STSModel(nn.Module):
         return x
 
 
-class NaverConnectModelWithDropout(nn.Module):
-    def __init__(self, plm_name):
+class WithDropout(nn.Module):
+    def __init__(self, plm_name, dropout):
         super().__init__()
         self.plm_name = plm_name
+        self.dropout_rate = dropout
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model_name_or_path=plm_name, num_labels=1, use_auth_token=True
+            pretrained_model_name_or_path=self.plm_name, num_labels=1, use_auth_token=False
         )
-        self.dropout = nn.Dropout(0.3)  # 드롭아웃 레이어 추가
+        self.dropout = nn.Dropout(self.dropout_rate)  # 드롭아웃 레이어 추가
 
     def forward(self, x):
         x = self.plm(x)["logits"]

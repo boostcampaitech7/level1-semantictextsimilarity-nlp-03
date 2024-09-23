@@ -96,7 +96,16 @@ if __name__ == "__main__":
             },
             'batch_size': {
                 'values': [16, 32]
-            }
+            },
+            'dropout': {
+                'values': [0.1, 0.2, 0.3]
+            },
+            # 'optimizer': {
+            #     'values': ['adam', 'adamw']
+            # },
+            # 'lr_scheduler': {
+            #     'values': [50, 100]
+            # },
         }
     }
     
