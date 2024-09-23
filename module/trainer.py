@@ -4,6 +4,7 @@ from base import BaseTrainer
 from tqdm import tqdm
 import wandb
 import os
+import re
 
 class Trainer(BaseTrainer):
     """
@@ -18,8 +19,6 @@ class Trainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.train_dataloader = self.data_module.train_dataloader()
         self.valid_dataloader = self.data_module.val_dataloader()
-
-        self.saved_models = []
 
     def _train_epoch(self, epoch):
  
@@ -107,10 +106,25 @@ class Trainer(BaseTrainer):
             f'val_{self.config["metrics"][0]}': self.best_score,
         }, model_filename)
 
-        self.saved_models.append(model_filename)
+        print(f"Model saved: {model_filename}")
 
-        if len(self.saved_models) > self.config['saved_model_count']:
-            oldest_model = self.saved_models.pop(0)
-            if os.path.exists(oldest_model):
-                os.remove(oldest_model)
-                print(f"Removed oldest model: {oldest_model}")
+        self.manage_saved_models()
+
+    def manage_saved_models(self):
+        files = [os.path.join(self.config["trainer"]["save_dir"], f) for f in os.listdir(self.config["trainer"]["save_dir"]) if f.endswith('.pth')]
+
+        pattern = re.compile(r"_val_\w+=(\d+\.\d+).pth")
+
+        files_with_scores = []
+        for file in files:
+            match = pattern.search(file)
+            if match:
+                score = float(match.group(1))
+                files_with_scores.append((file, score))
+
+
+        if len(files) > self.config['saved_model_count']:
+            files_with_scores.sort(key=lambda x: x[1])
+            oldest_file, lowest_score = files_with_scores[0]
+            os.remove(oldest_file)
+            print(f"Removed oldest model: {oldest_file}")
