@@ -26,7 +26,8 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.len_epoch = len(self.train_dataloader)
         total_loss = 0
-        for (data, target) in tqdm(self.train_dataloader, total=len(self.train_dataloader), desc=f"epoch {epoch} training"):
+        for item in tqdm(self.train_dataloader, total=len(self.train_dataloader), desc=f"epoch {epoch} training"):
+            data, target = item['input_ids'], item['labels']
             # 1.1. prepare data
             data, target = data.to(self.device), target.to(self.device)
             # 1.2. initalize gradient by 0
@@ -58,7 +59,8 @@ class Trainer(BaseTrainer):
         total_loss = 0
         outputs, targets = [], []
         with torch.no_grad():
-            for (data, target) in tqdm(self.valid_dataloader, total=len(self.valid_dataloader), desc=f"epoch {epoch} validing"):
+            for item in tqdm(self.valid_dataloader, total=len(self.valid_dataloader), desc=f"epoch {epoch} validing"):
+                data, target = item['input_ids'], item['labels']
                 # 1.1. prepare data
                 data, target = data.to(self.device), target.to(self.device)
                 # 1.2. run model

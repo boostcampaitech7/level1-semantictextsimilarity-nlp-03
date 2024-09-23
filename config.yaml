@@ -6,11 +6,16 @@ arch:
   type: WithDropout
   args:
     plm_name: snunlp/KR-ELECTRA-discriminator
-    dropout: 0.0
+    # snunlp/KR-ELECTRA-discriminator, BAAI/bge-multilingual-gemma2, kakaobank/kf-deberta-base
+    dropout_rate: 0.0
+    lora_r: 0.0
+    lora_alpha: 0.0
+    lora_dropout: 0.0
 
 data_module:
   type: DataModule
   args:
+    arch_type: ${arch.type}
     plm_name: ${arch.args.plm_name}
     dataset_name: STSDataset
     batch_size: 16
@@ -25,7 +30,7 @@ data_module:
       input: [sentence_1, sentence_2]
 
 optimizer:
-  type: Adam
+  type: AdamW
   args:
     lr: 0.00002
     weight_decay: 0
@@ -41,7 +46,7 @@ lr_scheduler:
     gamma: 0.1
 
 trainer:
-  epochs: 20
+  epochs: 15
   save_dir: ${pwd}/saved/
   mode: max
 
