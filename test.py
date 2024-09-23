@@ -13,7 +13,8 @@ def inference(dataloader, model, criterion, metrics, device):
     outputs, targets = [], []
     total_loss = 0
     with torch.no_grad():
-        for (data, target) in tqdm(dataloader):
+        for item in tqdm(dataloader):
+            data, target = item['input_ids'], item['labels']
             data, target = data.to(device), target.to(device)
             output = model(data)
             loss = criterion(output, target)
@@ -82,7 +83,8 @@ def main(checkpoint_path):
 
     outputs = []
     with torch.no_grad():
-        for data in tqdm(predict_dataloader):
+        for item in tqdm(predict_dataloader):
+            data = item['input_ids']
             data = data.to(device)
             output = model(data)
             outputs.append(output)
@@ -94,5 +96,5 @@ def main(checkpoint_path):
 
 if __name__ == '__main__':
 
-    checkpoint_path = "/data/ephemeral/home/nlp_sts/saved/WithDropout_snunlp-KR-ELECTRA-discriminator_val_pearson=0.9300758838653564.pth"
+    checkpoint_path = "/data/ephemeral/home/nlp_sts/saved/STSModel_KLUE-roberta-small_val_pearson=0.8062138557434082.pth"
     main(checkpoint_path)

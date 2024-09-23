@@ -34,7 +34,7 @@ def main(cfg):
 
     # 2. set model(=nn.Module class)
     model = init_obj(config["arch"]["type"], config["arch"]["args"], module_arch)
-
+    model.plm.config.pad_token_id = data_module.tokenizer.pad_token_id
     # 3. set deivce(cpu or gpu)
     # 장치 설정
     if torch.cuda.is_available():

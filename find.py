@@ -30,7 +30,7 @@ def main(config):
         config.data_module.args.batch_size = wandb_config.batch_size
         config.optimizer.args.lr = wandb_config.learning_rate
         config.optimizer.args.weight_decay = wandb_config.weight_decay
-        config.arch.args.dropout_rate = wandb_config.dropout_rate
+        # config.arch.args.dropout_rate = wandb_config.dropout_rate
         config.arch.args.lora_r = wandb_config.lora_r
         config.arch.args.lora_alpha = wandb_config.lora_alpha
         config.arch.args.lora_dropout = wandb_config.lora_dropout
@@ -78,6 +78,7 @@ def main(config):
         trainable_params_count = sum(p.numel() for p in trainable_params)
         print(f"Total parameters: {total_params}")
         print(f"Trainable parameters: {trainable_params_count}")
+        print(model)
 
         trainer = Trainer(
             model,
@@ -95,7 +96,7 @@ def main(config):
 
 if __name__ == "__main__":
     sweep_config = {
-        'name': 'SLMSTS',
+        'name': 'gemma-sweep',
         'method': 'random',  # 또는 'bayes'
         'metric': {
             'name': 'val_pearson',
@@ -108,11 +109,11 @@ if __name__ == "__main__":
                 'max': 0.00005
             },
             'batch_size': {
-                'values': [32, 64] # 모델에 따라 다르게 설정
+                'values': [64] # 모델에 따라 다르게 설정
             },
-            'dropout_rate': {
-                'values': [0.1, 0.2, 0.3]
-            },
+            # 'dropout_rate': {
+            #     'values': [0.1, 0.2, 0.3]
+            # },
             # 'optimizer': {
             #     'values': ['adam', 'adamw']
             # },
@@ -121,21 +122,21 @@ if __name__ == "__main__":
             # },
             'weight_decay': {
                 'distribution': 'uniform', 
-                'min': 0.000001,
-                'max': 0.00005
+                'min': 0.00001,
+                'max': 0.0001
             },
             'lora_r': {
                 'values': [32, 64]
             },
             'lora_alpha': {
-                'values': [8, 16, 32]
+                'values': [16, 32]
             },
             'lora_dropout': {
-                'values': [0.05, 0.1, 0.2]
+                'values': [0.2, 0.4, 0.6]
             },
         }
     }
     
-    sweep_id = wandb.sweep(sweep_config, project="STS")
+    sweep_id = wandb.sweep(sweep_config, project="test_roberta_small")
 
     wandb.agent(sweep_id, function=main, count=15)

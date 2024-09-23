@@ -5,7 +5,7 @@ import transformers
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 
 class STSModel(nn.Module):
-    def __init__(self, plm_name):
+    def __init__(self, plm_name, dropout_rate, lora_r, lora_alpha, lora_dropout):
         super().__init__()
         self.plm_name = plm_name
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
@@ -59,12 +59,11 @@ class SLMModel(nn.Module):
             quantization_config=bnb_config,
             device_map="auto"
         )
-
         # k-bit 훈련 준비
         self.plm = prepare_model_for_kbit_training(self.plm)
     
-        for param in self.plm.score.parameters():
-            param.requires_grad = True
+        # for param in self.plm.score.parameters():
+        #     param.requires_grad = True
     
         # LoRA 적용
         self.plm = get_peft_model(self.plm, lora_config)
@@ -73,7 +72,7 @@ class SLMModel(nn.Module):
     def forward(self, x):
         outputs = self.plm(x)
         return outputs.logits.squeeze(-1)
-
+    
 
 class SevenElevenWithBiLSTM(nn.Module):
     def __init__(self, plm_name, hidden_size=64):

@@ -3,14 +3,14 @@ pwd: /data/ephemeral/home/
 name: STS
 
 arch:
-  type: WithDropout
+  type: STSModel
   args:
-    plm_name: snunlp/KR-ELECTRA-discriminator
-    # snunlp/KR-ELECTRA-discriminator, BAAI/bge-multilingual-gemma2, kakaobank/kf-deberta-base
-    dropout_rate: 0.0
-    lora_r: 0.0
-    lora_alpha: 0.0
-    lora_dropout: 0.0
+    plm_name: KLUE/roberta-small
+    # snunlp/KR-ELECTRA-discriminator, BAAI/bge-multilingual-gemma2, kakaobank/kf-deberta-base, beomi/Llama-3-Open-Ko-8B
+    dropout_rate: 0.1
+    lora_r: 64
+    lora_alpha: 32
+    lora_dropout: 0.1
 
 data_module:
   type: DataModule
@@ -33,7 +33,7 @@ optimizer:
   type: AdamW
   args:
     lr: 0.00002
-    weight_decay: 0
+    weight_decay: 2e-5
     amsgrad: true
 
 loss: l2_loss
@@ -46,7 +46,7 @@ lr_scheduler:
     gamma: 0.1
 
 trainer:
-  epochs: 15
+  epochs: 0
   save_dir: ${pwd}/saved/
   mode: max
 
