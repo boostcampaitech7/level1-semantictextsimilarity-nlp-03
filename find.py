@@ -26,9 +26,15 @@ def main(config):
     config.wandb.enable = True
     with wandb.init():
         wandb_config = wandb.config
+        # ---------------------------------Connect----------------------------------------
         config.data_module.args.batch_size = wandb_config.batch_size
         config.optimizer.args.lr = wandb_config.learning_rate
-
+        config.optimizer.args.weight_decay = wandb_config.weight_decay
+        config.arch.args.dropout_rate = wandb_config.dropout_rate
+        config.arch.args.lora_r = wandb_config.lora_r
+        config.arch.args.lora_alpha = wandb_config.lora_alpha
+        config.arch.args.lora_dropout = wandb_config.lora_dropout
+        # --------------------------------------------------------------------------------
         config = OmegaConf.to_container(config, resolve=True)
 
         # 1. set data_module(=pl.DataModule class)
@@ -67,6 +73,12 @@ def main(config):
             optimizer,
         )
 
+        # 6. print model summary, 학습 가능한 파라미터 수 계산
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params_count = sum(p.numel() for p in trainable_params)
+        print(f"Total parameters: {total_params}")
+        print(f"Trainable parameters: {trainable_params_count}")
+
         trainer = Trainer(
             model,
             criterion,
@@ -83,6 +95,7 @@ def main(config):
 
 if __name__ == "__main__":
     sweep_config = {
+        'name': 'SLMSTS',
         'method': 'random',  # 또는 'bayes'
         'metric': {
             'name': 'val_pearson',
@@ -91,15 +104,38 @@ if __name__ == "__main__":
         'parameters': {
             'learning_rate': {
                 'distribution': 'uniform',  # 또는 'log_uniform'
-                'min': 0.00001,
-                'max': 0.0001
+                'min': 0.000001,
+                'max': 0.00005
             },
             'batch_size': {
-                'values': [16, 32]
-            }
+                'values': [32, 64] # 모델에 따라 다르게 설정
+            },
+            'dropout_rate': {
+                'values': [0.1, 0.2, 0.3]
+            },
+            # 'optimizer': {
+            #     'values': ['adam', 'adamw']
+            # },
+            # 'lr_scheduler': {
+            #     'values': [50, 100]
+            # },
+            'weight_decay': {
+                'distribution': 'uniform', 
+                'min': 0.000001,
+                'max': 0.00005
+            },
+            'lora_r': {
+                'values': [32, 64]
+            },
+            'lora_alpha': {
+                'values': [8, 16, 32]
+            },
+            'lora_dropout': {
+                'values': [0.05, 0.1, 0.2]
+            },
         }
     }
     
     sweep_id = wandb.sweep(sweep_config, project="STS")
 
-    wandb.agent(sweep_id, function=main, count=10)
+    wandb.agent(sweep_id, function=main, count=15)

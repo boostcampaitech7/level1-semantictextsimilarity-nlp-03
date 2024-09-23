@@ -62,8 +62,8 @@ def main(checkpoint_path):
     # 5. inference
     train_result, train_outputs = inference(train_dataloader, model, criterion, metrics, device)
     test_result, test_outputs = inference(test_dataloader, model, criterion, metrics, device)
-    print(train_result)
-    print(test_result)
+    print("train_result: ", train_result)
+    print("test_result: ", test_result)
   
     # 6. save output
     pwd = os.getcwd()
@@ -94,5 +94,5 @@ def main(checkpoint_path):
 
 if __name__ == '__main__':
 
-    checkpoint_path = "/data/ephemeral/home/gj/pytorch-template/saved/STSModel_snunlp-KR-ELECTRA-discriminator_val_pearson=0.9253344535827637.pth"
+    checkpoint_path = "/data/ephemeral/home/nlp_sts/saved/WithDropout_snunlp-KR-ELECTRA-discriminator_val_pearson=0.9300758838653564.pth"
     main(checkpoint_path)

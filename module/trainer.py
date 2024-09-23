@@ -3,7 +3,7 @@ import torch
 from base import BaseTrainer
 from tqdm import tqdm
 import wandb
-
+import os
 
 class Trainer(BaseTrainer):
     """
@@ -19,12 +19,15 @@ class Trainer(BaseTrainer):
         self.train_dataloader = self.data_module.train_dataloader()
         self.valid_dataloader = self.data_module.val_dataloader()
 
+        self.saved_models = []
+
     def _train_epoch(self, epoch):
  
         self.model.train()
         self.len_epoch = len(self.train_dataloader)
         total_loss = 0
-        for (data, target) in tqdm(self.train_dataloader, total=len(self.train_dataloader), desc=f"epoch {epoch} training"):
+        for item in tqdm(self.train_dataloader, total=len(self.train_dataloader), desc=f"epoch {epoch} training"):
+            data, target = item['input_ids'], item['labels']
             # 1.1. prepare data
             data, target = data.to(self.device), target.to(self.device)
             # 1.2. initalize gradient by 0
@@ -56,7 +59,8 @@ class Trainer(BaseTrainer):
         total_loss = 0
         outputs, targets = [], []
         with torch.no_grad():
-            for (data, target) in tqdm(self.valid_dataloader, total=len(self.valid_dataloader), desc=f"epoch {epoch} validing"):
+            for item in tqdm(self.valid_dataloader, total=len(self.valid_dataloader), desc=f"epoch {epoch} validing"):
+                data, target = item['input_ids'], item['labels']
                 # 1.1. prepare data
                 data, target = data.to(self.device), target.to(self.device)
                 # 1.2. run model
@@ -84,19 +88,29 @@ class Trainer(BaseTrainer):
         print(", ".join(f'{key}: {value}'for key, value in result.items()))
 
         # 2.3. save model if model break best score
-        if self.mode == "min" and result[f"val_{self.config['metrics'][0]}"] < self.best_score:
-            self.best_score = result[f"val_{self.config['metrics'][0]}"]
+        current_score = result[f"val_{self.config['metrics'][0]}"]
+        if self.mode == "min" and current_score < self.best_score:
+            self.best_score = current_score
             self.save(epoch)
-
-            torch.save(self.model, self.save_file)
-        if self.mode == "max" and result[f"val_{self.config['metrics'][0]}"] > self.best_score: 
-            self.best_score = result[f"val_{self.config['metrics'][0]}"]
+        elif self.mode == "max" and current_score > self.best_score: 
+            self.best_score = current_score
             self.save(epoch)
 
     def save(self, epoch):
-        torch.save({ 'epoch': epoch,
+        model_filename = f"{self.save_file}_val_{self.config['metrics'][0]}={self.best_score}.pth"
+
+        torch.save({
+            'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'config': self.config,
             f'val_{self.config["metrics"][0]}': self.best_score,
-        }, f"{self.save_file}_val_{self.config['metrics'][0]}={self.best_score}.pth")
+        }, model_filename)
+
+        self.saved_models.append(model_filename)
+
+        if len(self.saved_models) > self.config['saved_model_count']:
+            oldest_model = self.saved_models.pop(0)
+            if os.path.exists(oldest_model):
+                os.remove(oldest_model)
+                print(f"Removed oldest model: {oldest_model}")
