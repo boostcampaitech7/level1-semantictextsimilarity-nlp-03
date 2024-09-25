@@ -15,41 +15,20 @@ class Ensemble:
         for file in input_files:
             df = pd.read_csv(file, header=0)
             dataframes.append(df["target"])
-        dev_df = pd.read_csv(self.target_file)
-        dataframes.append(dev_df["label"])
         features_df = pd.concat(dataframes, axis=1)
-        return features_df
+        target_df = pd.read_csv(self.target_file)
+        return features_df, target_df["label"]
 
-    def average_label(self, input_files, output_file, weights=None):
-        dataframes = []
+    def average_label(self, input_files, weights=None):
 
-        for file in input_files:
-            df = pd.read_csv(file, header=None)
-            df = df.drop(index=0).reset_index(drop=True)
-            dataframes.append(df)
-
-        shapes = [df.shape for df in dataframes]
-        if not all(shape == shapes[0] for shape in shapes):
-            raise ValueError("All input CSV files must have the same number of rows and columns.")
-
-        concatenated = pd.concat(dataframes, axis=0, keys=range(len(dataframes)))
-        concatenated.iloc[:, -1] = concatenated.iloc[:, -1].astype(np.float64)
-
-        grouped = concatenated.groupby(level=1)
+        data, label = self.data_loader(input_files)
         
-        averaged_rows = []
+        if weights is None:
+            df_mean = data.mean(axis=1)
+        else:
+            df_mean = data.apply(lambda row: self.weighted_mean(row, weights=weights), axis=1)
 
-        for _, group in grouped:
-            if weights is not None:
-                values = group.iloc[:, -1].tolist()
-                last_column_mean = self.weighted_mean(values, weights)
-            else:
-                last_column_mean = group.iloc[:, -1].mean()
-            averaged_rows.append(last_column_mean)
-
-        averaged_df = pd.DataFrame(averaged_rows)
-
-        return averaged_df
+        return df_mean
 
     def weighted_mean(self, values, weights):
         values = np.array(values)
@@ -69,63 +48,25 @@ class Ensemble:
             return torchmetrics.functional.pearson_corrcoef(output, target)
         
     def inference(self, outputs, targets):
+        outputs = torch.Tensor(outputs.values).squeeze()
+        targets = torch.Tensor(targets.values)
         result = self.pearson(outputs, targets)
         return float(result)
 
-    def find_best_combinations_rand(self, top_n=5, num_weights_search=None):
-        dev_df = pd.read_csv(self.target_file)
-        targets = torch.Tensor(dev_df.iloc[:, -2].values)
-
-        best_combinations = []
-        output_file = "./output/temp_averaged_output.csv"
-        if num_weights_search is not None:
-            for r in range(1, len(self.input_files) + 1):
-                for combo in combinations(self.input_files, r):
-                    for _ in range(num_weights_search):
-                        weights = np.random.dirichlet(np.ones(len(combo)), size=1)[0]
-                        averaged_df = self.average_label(combo, output_file, weights=weights)
-                        outputs = torch.Tensor(averaged_df.values).squeeze()
-                        result = self.inference(outputs, targets)
-                        val_pearson = result
-                        best_combinations.append((combo, val_pearson, weights))
-            best_combinations.sort(key=lambda x: x[1], reverse=True)
-            for combo, val_pearson, weights in best_combinations[:top_n]:
-                print(f"Combination: {combo}, val_pearson: {val_pearson}, weights: {weights}")
-        else:
-            for r in range(1, len(self.input_files) + 1):
-                for combo in combinations(self.input_files, r):
-                    averaged_df = self.average_label(combo, output_file)
-                    outputs = torch.Tensor(averaged_df.values).squeeze()
-                    result = self.inference(outputs, targets)
-                    val_pearson = result
-                    best_combinations.append((combo, val_pearson))
-            best_combinations.sort(key=lambda x: x[1], reverse=True)
-            for combo, val_pearson in best_combinations[:top_n]:
-                print(f"Combination: {combo}, val_pearson: {val_pearson}")
-        print(f"num of combinations: ", len(best_combinations))
-        return best_combinations
-    
     def find_best_combinations(self, top_n=5):
 
         best_combinations = []
-        output_file = "./output/temp_averaged_output.csv"
 
         for r in range(1, len(self.input_files) + 1):
             for combo in combinations(self.input_files, r):
-                featured_df = self.data_loader(combo)
-                targets = torch.Tensor(featured_df['label'].values)
+                data, label = self.data_loader(combo)
 
-                X = featured_df.iloc[:, :-1]
-                y = featured_df['label']
                 model = LinearRegression(fit_intercept=False)  # intercept를 0으로 고정
-                model.fit(X, y)
+                model.fit(data, label)
                 weights = model.coef_.tolist()
-                # print("coefficients: ", weights)
                 
-                averaged_df = self.average_label(combo, output_file, weights=weights)
-                outputs = torch.Tensor(averaged_df.values).squeeze()
-                result = self.inference(outputs, targets)
-                val_pearson = result
+                outputs = self.average_label(combo, weights=weights)
+                val_pearson = self.inference(outputs, label)
                 best_combinations.append((combo, val_pearson, weights))
 
         best_combinations.sort(key=lambda x: x[1], reverse=True)
@@ -133,20 +74,18 @@ class Ensemble:
             print(f"Combination: {combo}, val_pearson: {val_pearson}, weights: {weights}")
     
     def run(self, weights=None):
-        output_file = "./output/averaged_output.csv"
-        averaged_df = ensemble.average_label(input_files, output_file, weights)
-        outputs = torch.Tensor(averaged_df.values).squeeze()
+        outputs = ensemble.average_label(self.input_files, weights)
 
-        target_df = pd.read_csv(self.target_file) 
-        targets = torch.Tensor(target_df.iloc[:, -2].values)
+        _, label = self.data_loader(self.input_files)
 
-        result = self.inference(outputs, targets)
+        result = self.inference(outputs, label)
         print("val_pearson: ", result)
         return result
     
     def extract(self, weights=None):
-        output_file = "./output/averaged_output.csv"
-        averaged_df = ensemble.average_label(input_files, output_file, weights)
+        output_file = "./output_csv/averaged_output.csv"
+        averaged_df = ensemble.average_label(self.input_files, weights)
+        print("len: ",len(averaged_df))
 
         ids = [f"boostcamp-sts-v1-test-{i:03d}" for i in range(len(averaged_df))]
         result_df = pd.DataFrame({'id': ids, 'target': averaged_df[0]})
@@ -157,9 +96,15 @@ if __name__ == "__main__":
     target_file = '/data/ephemeral/home/nlp_sts/data/dev.csv' # target file
     input_files = [
         './model_csv/dev_output_llama.csv',
-        # './model_csv/dev_output_lighthouse.csv',
-        './model_csv/kakao_no_aug_dev_output.csv',
-        './model_csv/kr_electra_no_aug_dev_output.csv',
+        './model_csv/dev_output_lighthouse.csv',
+        # './model_csv/kakao_no_aug_dev_output.csv',
+        # './model_csv/kr_electra_no_aug_dev_output.csv',
+    ]
+    test_input_files = [
+        '/data/ephemeral/home/nlp_sts/output/SLMModel_beomi-Llama-3-Open-Ko-8B_val_pearson=0.9209751486778259/test_output.csv',
+        '/data/ephemeral/home/nlp_sts/ensembles/model_csv/test_output_lighthouse.csv',
+        '/data/ephemeral/home/nlp_sts/ensembles/model_csv/Dberta_output.csv',
+        '/data/ephemeral/home/nlp_sts/ensembles/model_csv/electra_output.csv',
     ]
    
     ensemble = Ensemble(input_files, target_file)
@@ -169,7 +114,7 @@ if __name__ == "__main__":
         각각의 비율로 평균을 내고, 평가 지표를 계산한다.
         weights가 비어있는 경우, 각 모델의 결과를 단순 평균내어 평가 지표를 계산한다.
 
-        ensemble.find_best_combinations_rand(num_weights_search=20) 
+        ensemble.find_best_combinations_rand(num_weights_search=20) -> Not Available now
         모든 조합을 만들어, 랜덤한 가중치를 부여하여 평가 지표를 계산한다.
         num_weights_search는 랜덤 가중치를 부여하는 횟수를 의미한다.
         가장 높은 평가 지표를 가진 조합을 출력한다.
@@ -184,7 +129,54 @@ if __name__ == "__main__":
         평균 결과를 CSV 파일로 저장한다.
     """
 
-    ensemble.find_best_combinations()
-    # ensemble.run(weights=[0.3, 0.3, 0.5]) 
-    # ensemble.find_best_combinations(num_weights_search=20)
-    # ensemble.extract(weights=[0.7, 0.1, 0.1, 0.1])
+    # ensemble.find_best_combinations()
+    ensemble.run() # weights=[0.3, 0.3, 0.5]
+    # ensemble.extract(weights=[0.28573992219999816, 0.025428651964418347, 0.2888048699177855, 0.5734429299909745])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # def find_best_combinations_rand(self, top_n=5, num_weights_search=None):
+    #     dev_df = pd.read_csv(self.target_file)
+    #     targets = torch.Tensor(dev_df.iloc[:, -2].values)
+
+    #     best_combinations = []
+    #     output_file = "./output/temp_averaged_output.csv"
+    #     if num_weights_search is not None:
+    #         for r in range(1, len(self.input_files) + 1):
+    #             for combo in combinations(self.input_files, r):
+    #                 for _ in range(num_weights_search):
+    #                     weights = np.random.dirichlet(np.ones(len(combo)), size=1)[0]
+    #                     outputs = self.average_label(combo, weights=weights)
+    #                     result = self.inference(outputs, targets)
+    #                     val_pearson = result
+    #                     best_combinations.append((combo, val_pearson, weights))
+    #         best_combinations.sort(key=lambda x: x[1], reverse=True)
+    #         for combo, val_pearson, weights in best_combinations[:top_n]:
+    #             print(f"Combination: {combo}, val_pearson: {val_pearson}, weights: {weights}")
+    #     else:
+    #         for r in range(1, len(self.input_files) + 1):
+    #             for combo in combinations(self.input_files, r):
+    #                 outputs = self.average_label(combo)
+    #                 result = self.inference(outputs, targets)
+    #                 val_pearson = result
+    #                 best_combinations.append((combo, val_pearson))
+    #         best_combinations.sort(key=lambda x: x[1], reverse=True)
+    #         for combo, val_pearson in best_combinations[:top_n]:
+    #             print(f"Combination: {combo}, val_pearson: {val_pearson}")
+    #     print(f"num of combinations: ", len(best_combinations))
+    #     return best_combinations
+    
