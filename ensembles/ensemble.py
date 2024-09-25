@@ -48,7 +48,7 @@ def inference(outputs, targets):
 
 if __name__ == "__main__":
     input_files = [
-        '/data/ephemeral/home/nlp_sts/output/SLMModel_beomi-Llama-3-Open-Ko-8B_val_pearson=0.9209751486778259/dev_output.csv',
+        '/data/ephemeral/home/nlp_sts/ensembles/dev_output_llama.csv',
         '/data/ephemeral/home/nlp_sts/ensembles/dev_output_lighthouse.csv',
         '/data/ephemeral/home/nlp_sts/ensembles/kakao_no_aug_dev_output.csv',
         '/data/ephemeral/home/nlp_sts/ensembles/kr_electra_no_aug_dev_output.csv',
