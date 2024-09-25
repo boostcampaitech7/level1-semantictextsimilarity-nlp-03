@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import torch    
 import torchmetrics
+from itertools import combinations
 
 def average_last_column(input_files, output_file):
     dataframes = []
@@ -27,7 +28,6 @@ def average_last_column(input_files, output_file):
         averaged_rows.append(last_column_mean)
 
     averaged_df = pd.DataFrame(averaged_rows)
-    print(averaged_df.head())
 
     ids = [f"boostcamp-sts-v1-test-{i:03d}" for i in range(len(averaged_rows))]
     result_df = pd.DataFrame({'id': ids, 'target': averaged_df[0]})
@@ -54,15 +54,38 @@ if __name__ == "__main__":
         '/data/ephemeral/home/nlp_sts/ensembles/kr_electra_no_aug_dev_output.csv',
     ]
 
-    output_file = "averaged_output.csv"
+    def find_best_combinations(input_files, target_file, top_n=5):
+        dev_df = pd.read_csv(target_file)
+        targets = torch.Tensor(dev_df.iloc[:, -2].values)
 
-    averaged_df = average_last_column(input_files, output_file)
-    outputs = torch.Tensor(averaged_df).squeeze()
+        best_combinations = []
+        for r in range(1, len(input_files) + 1):
+            for combo in combinations(input_files, r):
+                output_file = "temp_averaged_output.csv"
+                averaged_df = average_last_column(combo, output_file)
+                outputs = torch.Tensor(averaged_df).squeeze()
+                result = inference(outputs, targets)
+                val_pearson = float(result["val_pearson"])
+                best_combinations.append((combo, val_pearson))
 
-    dev_df = pd.read_csv('/data/ephemeral/home/nlp_sts/data/dev.csv')
-    targets = torch.Tensor(dev_df.iloc[:, -2].values)
+        best_combinations.sort(key=lambda x: x[1], reverse=True)
+        return best_combinations[:top_n]
 
-    result = inference(outputs, targets)
+    target_file = '/data/ephemeral/home/nlp_sts/data/dev.csv'
+    best_combinations = find_best_combinations(input_files, target_file)
 
-    print("val_pearson: ", float(result["val_pearson"]))
+    for combo, val_pearson in best_combinations:
+        print(f"Combination: {combo}, val_pearson: {val_pearson}")
+
+    # output_file = "averaged_output.csv"
+
+    # averaged_df = average_last_column(input_files, output_file)
+    # outputs = torch.Tensor(averaged_df).squeeze()
+
+    # dev_df = pd.read_csv('/data/ephemeral/home/nlp_sts/data/dev.csv') # target file
+    # targets = torch.Tensor(dev_df.iloc[:, -2].values)
+
+    # result = inference(outputs, targets)
+
+    # print("val_pearson: ", float(result["val_pearson"]))
 
