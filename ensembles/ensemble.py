@@ -127,6 +127,23 @@ if __name__ == "__main__":
    
     ensemble = Ensemble(input_files, target_file)
 
-    # ensemble.run(weights=[0.7, 0.1, 0.1, 0.1])
+    """
+        ensemble.run(weights=[0.7, 0.1, 0.1, 0.1]) 
+        각각의 비율로 평균을 내고, 평가 지표를 계산한다.
+        weights가 비어있는 경우, 각 모델의 결과를 단순 평균내어 평가 지표를 계산한다.
+
+        ensemble.find_best_combinations(num_weights_search=20) 
+        모든 조합을 만들어, 랜덤한 가중치를 부여하여 평가 지표를 계산한다.
+        num_weights_search는 랜덤 가중치를 부여하는 횟수를 의미한다.
+        가장 높은 평가 지표를 가진 조합을 출력한다.
+
+        ensemble.extract(weights=[0.7, 0.1, 0.1, 0.1]) 
+        각각의 비율로 평균을 내고, 평가 지표를 계산한다.
+        weights가 비어있는 경우, 각 모델의 결과를 단순 평균내어 평가 지표를 계산한다.
+        평균 결과를 CSV 파일로 저장한다.
+    """
+
+
+    # ensemble.run(weights=[0.7, 0.1, 0.1, 0.1]) 
     ensemble.find_best_combinations(num_weights_search=20)
     # ensemble.extract(weights=[0.7, 0.1, 0.1, 0.1])
