@@ -1,14 +1,24 @@
 import pandas as pd
 import numpy as np
-import glob
 import torch    
 import torchmetrics
 from itertools import combinations
+from sklearn.linear_model import LinearRegression
 
 class Ensemble:
     def __init__(self, input_files, target_file):
         self.input_files = input_files
         self.target_file = target_file
+
+    def data_loader(self, input_files):
+        dataframes = []
+        for file in input_files:
+            df = pd.read_csv(file, header=0)
+            dataframes.append(df["target"])
+        dev_df = pd.read_csv(self.target_file)
+        dataframes.append(dev_df["label"])
+        features_df = pd.concat(dataframes, axis=1)
+        return features_df
 
     def average_label(self, input_files, output_file, weights=None):
         dataframes = []
@@ -62,7 +72,7 @@ class Ensemble:
         result = self.pearson(outputs, targets)
         return float(result)
 
-    def find_best_combinations(self, top_n=5, num_weights_search=None):
+    def find_best_combinations_rand(self, top_n=5, num_weights_search=None):
         dev_df = pd.read_csv(self.target_file)
         targets = torch.Tensor(dev_df.iloc[:, -2].values)
 
@@ -94,6 +104,33 @@ class Ensemble:
                 print(f"Combination: {combo}, val_pearson: {val_pearson}")
         print(f"num of combinations: ", len(best_combinations))
         return best_combinations
+    
+    def find_best_combinations(self, top_n=5):
+
+        best_combinations = []
+        output_file = "./output/temp_averaged_output.csv"
+
+        for r in range(1, len(self.input_files) + 1):
+            for combo in combinations(self.input_files, r):
+                featured_df = self.data_loader(combo)
+                targets = torch.Tensor(featured_df['label'].values)
+
+                X = featured_df.iloc[:, :-1]
+                y = featured_df['label']
+                model = LinearRegression(fit_intercept=False)  # intercept를 0으로 고정
+                model.fit(X, y)
+                weights = model.coef_.tolist()
+                # print("coefficients: ", weights)
+                
+                averaged_df = self.average_label(combo, output_file, weights=weights)
+                outputs = torch.Tensor(averaged_df.values).squeeze()
+                result = self.inference(outputs, targets)
+                val_pearson = result
+                best_combinations.append((combo, val_pearson, weights))
+
+        best_combinations.sort(key=lambda x: x[1], reverse=True)
+        for combo, val_pearson, weights in best_combinations[:top_n]:
+            print(f"Combination: {combo}, val_pearson: {val_pearson}, weights: {weights}")
     
     def run(self, weights=None):
         output_file = "./output/averaged_output.csv"
@@ -132,9 +169,13 @@ if __name__ == "__main__":
         각각의 비율로 평균을 내고, 평가 지표를 계산한다.
         weights가 비어있는 경우, 각 모델의 결과를 단순 평균내어 평가 지표를 계산한다.
 
-        ensemble.find_best_combinations(num_weights_search=20) 
+        ensemble.find_best_combinations_rand(num_weights_search=20) 
         모든 조합을 만들어, 랜덤한 가중치를 부여하여 평가 지표를 계산한다.
         num_weights_search는 랜덤 가중치를 부여하는 횟수를 의미한다.
+        가장 높은 평가 지표를 가진 조합을 출력한다.
+
+        ensemble.find_best_combinations()
+        모든 조합을 만들어, Linear Regression을 사용하여 가중치를 부여하여 평가 지표를 계산한다.
         가장 높은 평가 지표를 가진 조합을 출력한다.
 
         ensemble.extract(weights=[0.7, 0.1, 0.1, 0.1]) 
@@ -143,7 +184,7 @@ if __name__ == "__main__":
         평균 결과를 CSV 파일로 저장한다.
     """
 
-
-    # ensemble.run(weights=[0.7, 0.1, 0.1, 0.1]) 
-    ensemble.find_best_combinations(num_weights_search=20)
+    ensemble.find_best_combinations()
+    # ensemble.run(weights=[0.3, 0.3, 0.5]) 
+    # ensemble.find_best_combinations(num_weights_search=20)
     # ensemble.extract(weights=[0.7, 0.1, 0.1, 0.1])
