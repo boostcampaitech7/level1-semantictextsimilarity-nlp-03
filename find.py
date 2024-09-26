@@ -44,6 +44,7 @@ def main(config):
 
         # 2. set model(=nn.Module class)
         model = init_obj(config["arch"]["type"], config["arch"]["args"], module_arch)
+        model.plm.config.pad_token_id = data_module.tokenizer.pad_token_id
 
         # 3. set deivce(cpu or gpu)
         if torch.cuda.is_available():
@@ -104,9 +105,7 @@ if __name__ == "__main__":
         },
         'parameters': {
             'learning_rate': {
-                'distribution': 'uniform',  # 또는 'log_uniform'
-                'min': 0.000001,
-                'max': 0.00005
+                'values': [1e-5] 
             },
             'batch_size': {
                 'values': [64] # 모델에 따라 다르게 설정
@@ -126,17 +125,19 @@ if __name__ == "__main__":
                 'max': 0.0001
             },
             'lora_r': {
-                'values': [32, 64]
+                'values': [16]
             },
             'lora_alpha': {
-                'values': [16, 32]
+                'values': [16]
             },
             'lora_dropout': {
-                'values': [0.2, 0.4, 0.6]
+                'distribution': 'uniform', 
+                    'min': 0.3,
+                    'max': 0.6
             },
         }
     }
     
-    sweep_id = wandb.sweep(sweep_config, project="test_roberta_small")
+    sweep_id = wandb.sweep(sweep_config, project="test_sts")
 
-    wandb.agent(sweep_id, function=main, count=15)
+    wandb.agent(sweep_id, function=main, count=10)
