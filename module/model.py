@@ -62,8 +62,11 @@ class SLMModel(nn.Module):
         # k-bit 훈련 준비
         self.plm = prepare_model_for_kbit_training(self.plm)
     
-        # for param in self.plm.score.parameters():
-        #     param.requires_grad = True
+        # for name, param in self.plm.named_parameters():
+        #     if name == 'score.weight' in name:
+        #         param.requires_grad = True 
+        #     else:
+        #         param.requires_grad = False 
     
         # LoRA 적용
         self.plm = get_peft_model(self.plm, lora_config)

@@ -21,9 +21,10 @@ class DataModule:
         self.predict_dataset = None
 
         self.tokenizer = AutoTokenizer.from_pretrained(plm_name, max_length=max_length)
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
-        self.data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer) # if arch_type == 'SLMModel' else None
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+        self.data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer) 
         self.col_info = col_info
         self.setup()
 

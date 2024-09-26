@@ -17,12 +17,7 @@ class BaseDataset(torch.utils.data.Dataset):
         self.inputs, self.targets = self.preprocessing(data)
 
     def __getitem__(self, idx):
-        # if len(self.targets) == 0:
-        #     return torch.tensor(self.inputs[idx])
-        # else:
-        #     return torch.tensor(self.inputs[idx]), torch.tensor(self.targets[idx])
-        
-        item = self.inputs[idx].copy()  # 토큰화된 입력 딕셔너리 복사
+        item = self.inputs[idx].copy() 
         if self.targets:
             item['labels'] = torch.tensor(self.targets[idx])
 

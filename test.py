@@ -43,9 +43,10 @@ def main(checkpoint_path):
     predict_dataloader = data_module.predict_dataloader()
 
     # 2. set model(=nn.Module class)
+
     model = init_obj(config['arch']['type'], config['arch']['args'], module_arch)
     model.load_state_dict(checkpoint['model_state_dict'])
-
+    model.plm.config.pad_token_id = data_module.tokenizer.pad_token_id
     # 3. set deivce(cpu or gpu)
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -65,7 +66,7 @@ def main(checkpoint_path):
     test_result, test_outputs = inference(test_dataloader, model, criterion, metrics, device)
     print("train_result: ", train_result)
     print("test_result: ", test_result)
-  
+
     # 6. save output
     pwd = os.getcwd()
     if not os.path.exists(f'{pwd}/output/'):
@@ -96,5 +97,5 @@ def main(checkpoint_path):
 
 if __name__ == '__main__':
 
-    checkpoint_path = "/data/ephemeral/home/nlp_sts/saved/STSModel_KLUE-roberta-small_val_pearson=0.8062138557434082.pth"
+    checkpoint_path = "/data/ephemeral/home/nlp_sts/saved/STSModel_kakaobank-kf-deberta-base_val_pearson=0.0916246697306633.pth"
     main(checkpoint_path)

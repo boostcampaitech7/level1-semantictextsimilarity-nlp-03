@@ -32,14 +32,6 @@ class STSDataset(BaseDataset):
 
         return inputs, targets
 
-    # def tokenizing(self, dataframe):
-    #     data = []
-    #     for idx, item in tqdm(dataframe.iterrows(), desc='tokenizing', total=len(dataframe)):
-    #         # 두 입력 문장을 [SEP] 토큰으로 이어붙여서 전처리합니다.
-    #         text = '[SEP]'.join([item[text_column] for text_column in self.col_info['input']])
-    #         outputs = self.tokenizer(text, add_special_tokens=True, padding='max_length', truncation=True)
-    #         data.append(outputs['input_ids'])
-    #     return data
     def tokenizing(self, dataframe):
         data = []
         for idx, item in tqdm(dataframe.iterrows(), desc='tokenizing', total=len(dataframe)):

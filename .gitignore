@@ -108,6 +108,7 @@ ENV/
 
 # input data, saved log, checkpoints
 data/
+data_/
 input/
 saved/
 datasets/

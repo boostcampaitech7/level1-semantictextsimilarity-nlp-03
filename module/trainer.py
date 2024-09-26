@@ -5,6 +5,7 @@ from tqdm import tqdm
 import wandb
 import os
 import re
+import time
 
 class Trainer(BaseTrainer):
     """
@@ -36,7 +37,7 @@ class Trainer(BaseTrainer):
             # 1.4. calculate loss
             loss = self.criterion(output, target)
             total_loss = loss.item()
-            # 1.5. calculate gradient
+            # 1.5. calculate gradient 
             loss.backward()
             # 1.6. optimize parameter
             self.optimizer.step()
