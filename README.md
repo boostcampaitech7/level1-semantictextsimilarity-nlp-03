@@ -86,6 +86,9 @@ metrics: [
 
 - `test.py`을 실행하면 train/dev/test dataset에 대한 예측값이 `output` 폴더 안에 저장됩니다. 이때,`checkpoint_path` 변수에 checkpoint 경로를 넣어줘 테스트에 사용되는 모델을 지정해줘야 합니다.
 
+### 5. project result
+![alt text](picture/resutl.png).
+
 ### Template structure
 
 ```
