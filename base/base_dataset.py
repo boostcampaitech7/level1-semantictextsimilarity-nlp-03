@@ -2,6 +2,7 @@ import torch
 import pandas as pd
 from abc import *
 
+
 class BaseDataset(torch.utils.data.Dataset):
     def __init__(self, data_path, tokenizer, col_info):
         """
@@ -21,10 +22,10 @@ class BaseDataset(torch.utils.data.Dataset):
         #     return torch.tensor(self.inputs[idx])
         # else:
         #     return torch.tensor(self.inputs[idx]), torch.tensor(self.targets[idx])
-        
+
         item = self.inputs[idx].copy()  # 토큰화된 입력 딕셔너리 복사
         if self.targets:
-            item['labels'] = torch.tensor(self.targets[idx])
+            item["labels"] = torch.tensor(self.targets[idx])
 
         return item
 

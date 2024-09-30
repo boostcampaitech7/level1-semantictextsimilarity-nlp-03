@@ -20,6 +20,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
+
 @hydra.main(config_path=".", config_name="config", version_base=None)
 def main(config):
     config.pwd = os.getcwd()
@@ -93,49 +94,37 @@ def main(config):
         # 6. train
         trainer.train()
 
+
 if __name__ == "__main__":
     sweep_config = {
-        'name': 'SLMSTS',
-        'method': 'random',  # 또는 'bayes'
-        'metric': {
-            'name': 'val_pearson',
-            'goal': 'maximize'
-        },
-        'parameters': {
-            'learning_rate': {
-                'distribution': 'uniform',  # 또는 'log_uniform'
-                'min': 0.000001,
-                'max': 0.00005
+        "name": "SLMSTS",
+        "method": "random",  # 또는 'bayes'
+        "metric": {"name": "val_pearson", "goal": "maximize"},
+        "parameters": {
+            "learning_rate": {
+                "distribution": "uniform",  # 또는 'log_uniform'
+                "min": 0.000001,
+                "max": 0.00005,
             },
-            'batch_size': {
-                'values': [32, 64] # 모델에 따라 다르게 설정
-            },
-            'dropout_rate': {
-                'values': [0.1, 0.2, 0.3]
-            },
+            "batch_size": {"values": [32, 64]},  # 모델에 따라 다르게 설정
+            "dropout_rate": {"values": [0.1, 0.2, 0.3]},
             # 'optimizer': {
             #     'values': ['adam', 'adamw']
             # },
             # 'lr_scheduler': {
             #     'values': [50, 100]
             # },
-            'weight_decay': {
-                'distribution': 'uniform', 
-                'min': 0.000001,
-                'max': 0.00005
+            "weight_decay": {
+                "distribution": "uniform",
+                "min": 0.000001,
+                "max": 0.00005,
             },
-            'lora_r': {
-                'values': [32, 64]
-            },
-            'lora_alpha': {
-                'values': [8, 16, 32]
-            },
-            'lora_dropout': {
-                'values': [0.05, 0.1, 0.2]
-            },
-        }
+            "lora_r": {"values": [32, 64]},
+            "lora_alpha": {"values": [8, 16, 32]},
+            "lora_dropout": {"values": [0.05, 0.1, 0.2]},
+        },
     }
-    
+
     sweep_id = wandb.sweep(sweep_config, project="STS")
 
     wandb.agent(sweep_id, function=main, count=15)
