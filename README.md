@@ -1,14 +1,7 @@
-안녕하세요, **NLP-11조 세븐일레븐**입니다.
+**NLP-03조 반반치킨**의 NLP Level 1 project입니다.
 
-저희 팀의 템플릿도 소개 드려 보려고 합니다. 😊
+저희는 프로젝트에서 좋은 성과를 내기 위해 여러 가지 모델, 전처리 방식, 하이퍼파라미터 등을 조합하여 다양하게 실험해보는 것이 중요하다고 생각했습니다. 이 작업을 최대한 효율적으로 하기 위해서, 모델, 데이터셋, 손실함수 등 학습 구성 요소들을 모듈화하여 수정이 필요한 부분 외 다른 코드는 그대로 유지할 수 있도록 템플릿을 제작하였습니다. 각 모델, 데이터셋 등은 클래스화하여 관리하며 `config.yaml` 파일을 이용해 학습, 예측 시에 인자로 전달함으로써 다양한 조합의 모델링 실험을 효율적으로 진행할 수 있습니다.
 
-저희는 여러 가지 모델, 전처리 방식, 하이퍼파라미터 등을 조합하여 다양하게 실험해보는 것이 중요하다고 생각했습니다. 이 작업을 최대한 효율적으로 하기 위해서, 모델, 데이터셋, 손실함수 등 학습 구성 요소들을 모듈화하여 수정이 필요한 부분 외 다른 코드는 그대로 유지할 수 있도록 템플릿을 제작하였습니다. 각 모델, 데이터셋 등은 클래스화하여 관리하며 `config.yaml` 파일을 이용해 학습, 예측 시에 인자로 전달함으로써 다양한 조합의 모델링 실험을 효율적으로 진행할 수 있습니다.
-
-(본 템플릿은 [victoresque 템플릿](https://github.com/victoresque/pytorch-template)을 바탕으로 저희 프로젝트에 적합하게 재구성하였습니다.)
-
-# Demo
-
-[유튜브 영상 링크](https://www.youtube.com/watch?v=jgXu96txl6I)
 
 # get started
 
@@ -32,7 +25,7 @@ name: STS
 
 arch:
   type: STSModel
-  args: 
+  args:
     plm_name: monologg/koelectra-base-v3-discriminator
 
 data_module:
@@ -73,7 +66,7 @@ metrics: [
 ![alt text](picture/model.png)
 1. `module/model.py`에서 `nn.Module`을 상속 받은 PyTorch 모델 클래스를 구현합니다.
 
-2. `config.yaml` 파일에서 `arch.type`값을 "해당 클래스 이름"으로 변경합니다 
+2. `config.yaml` 파일에서 `arch.type`값을 "해당 클래스 이름"으로 변경합니다
 참고로, 사전 학습 모델을 변경하고 싶을 경우 `arch.args.plm_name`값을 "원하는 사전 학습 모델 이름"(e.g., `klue/roberta-small`)으로 변경하면 됩니다.
 
 ### 3. customizing loss
@@ -93,29 +86,30 @@ metrics: [
 
 - `test.py`을 실행하면 train/dev/test dataset에 대한 예측값이 `output` 폴더 안에 저장됩니다. 이때,`checkpoint_path` 변수에 checkpoint 경로를 넣어줘 테스트에 사용되는 모델을 지정해줘야 합니다.
 
+### 5. project result
+![alt text](picture/result.png).
+
 ### Template structure
 
 ```
 pytorch-template
-├── base/ 
+├── base/
 |   ├── base_data_loader.py
 |   ├── base_dataset.py
 |	└── base_trainer.py
-├── module/   
+├── module/
 |   ├── dataset.py        # dataset class 구현
 |   ├── loss.py           # loss function 구현
 |   ├── matric.py         # matric function 구현
-|   ├── trainer.py        # trainer class 
+|   ├── trainer.py        # trainer class
 │   └── model.py          # model class 구현
 ├── config.yaml           # configuration file
 ├── saved/                # 모델 저장 폴더
 ├── output/               # 추론 결과 폴더
 ├── .gitignore
-├── README.md               
-├── reqirements.txt                            
+├── README.md
+├── reqirements.txt
 ├── test.py                # 모델 추론
 ├── train.py               # 모델 학습 및 저장
-└── utils.py         
+└── utils.py
 ```
-
-글 작성에 많은 도움을 주신 [임상엽_T7427](https://github.com/gityeop), [이재협_T7419](https://github.com/jhyeop) 팀원에게 감사의 말씀을 드립니다.

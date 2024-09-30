@@ -2,6 +2,7 @@ import torch
 import pandas as pd
 from abc import *
 
+
 class BaseDataset(torch.utils.data.Dataset):
     def __init__(self, data_path, tokenizer, col_info):
         """
@@ -18,8 +19,13 @@ class BaseDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         item = self.inputs[idx].copy() 
+
+        # if len(self.targets) == 0:
+        #     return torch.tensor(self.inputs[idx])
+        # else:
+        #     return torch.tensor(self.inputs[idx]), torch.tensor(self.targets[idx])
         if self.targets:
-            item['labels'] = torch.tensor(self.targets[idx])
+            item["labels"] = torch.tensor(self.targets[idx])
 
         return item
 
