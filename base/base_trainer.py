@@ -43,7 +43,7 @@ class BaseTrainer:
         """
         Full training logic
         """
-        if self.config['wandb']['enable']:
+        if self.config["wandb"]["enable"]:
             wandb.init(
                 project=self.config["wandb"]["project_name"],
                 name=self.save_file.split("/")[-1],

@@ -25,7 +25,7 @@ name: STS
 
 arch:
   type: STSModel
-  args: 
+  args:
     plm_name: monologg/koelectra-base-v3-discriminator
 
 data_module:
@@ -66,7 +66,7 @@ metrics: [
 ![alt text](picture/model.png)
 1. `module/model.py`에서 `nn.Module`을 상속 받은 PyTorch 모델 클래스를 구현합니다.
 
-2. `config.yaml` 파일에서 `arch.type`값을 "해당 클래스 이름"으로 변경합니다 
+2. `config.yaml` 파일에서 `arch.type`값을 "해당 클래스 이름"으로 변경합니다
 참고로, 사전 학습 모델을 변경하고 싶을 경우 `arch.args.plm_name`값을 "원하는 사전 학습 모델 이름"(e.g., `klue/roberta-small`)으로 변경하면 됩니다.
 
 ### 3. customizing loss
@@ -93,23 +93,23 @@ metrics: [
 
 ```
 pytorch-template
-├── base/ 
+├── base/
 |   ├── base_data_loader.py
 |   ├── base_dataset.py
 |	└── base_trainer.py
-├── module/   
+├── module/
 |   ├── dataset.py        # dataset class 구현
 |   ├── loss.py           # loss function 구현
 |   ├── matric.py         # matric function 구현
-|   ├── trainer.py        # trainer class 
+|   ├── trainer.py        # trainer class
 │   └── model.py          # model class 구현
 ├── config.yaml           # configuration file
 ├── saved/                # 모델 저장 폴더
 ├── output/               # 추론 결과 폴더
 ├── .gitignore
-├── README.md               
-├── reqirements.txt                            
+├── README.md
+├── reqirements.txt
 ├── test.py                # 모델 추론
 ├── train.py               # 모델 학습 및 저장
-└── utils.py         
+└── utils.py
 ```

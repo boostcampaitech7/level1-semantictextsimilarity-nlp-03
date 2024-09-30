@@ -10,6 +10,9 @@ def accuracy(output, target):
         correct += torch.sum(pred == target).item()
     return correct / len(target)
 
+
 def pearson(output, target):
     with torch.no_grad():
-        return torchmetrics.functional.pearson_corrcoef(output.squeeze(), target.squeeze())
+        return torchmetrics.functional.pearson_corrcoef(
+            output.squeeze(), target.squeeze()
+        )

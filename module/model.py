@@ -4,12 +4,15 @@ import torch.nn.functional as F
 import transformers
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 
+
 class STSModel(nn.Module):
     def __init__(self, plm_name):
         super().__init__()
         self.plm_name = plm_name
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model_name_or_path=self.plm_name, num_labels=1, use_auth_token=False
+            pretrained_model_name_or_path=self.plm_name,
+            num_labels=1,
+            use_auth_token=False,
         )
 
     def forward(self, x):
@@ -21,26 +24,29 @@ class WithDropout(nn.Module):
     def __init__(self, plm_name, dropout_rate, lora_r, lora_alpha, lora_dropout):
         super().__init__()
         self.plm_name = plm_name
-        self.dropout = nn.Dropout(dropout_rate) 
+        self.dropout = nn.Dropout(dropout_rate)
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model_name_or_path=self.plm_name, num_labels=1, use_auth_token=False
+            pretrained_model_name_or_path=self.plm_name,
+            num_labels=1,
+            use_auth_token=False,
         )
-        
+
     def forward(self, x):
         x = self.plm(x)["logits"]
         x = self.dropout(x)
         return x
 
+
 class SLMModel(nn.Module):
     def __init__(self, plm_name, dropout_rate, lora_r, lora_alpha, lora_dropout):
         super().__init__()
-    
-        # BitsAndBytesConfig 
+
+        # BitsAndBytesConfig
         bnb_config = transformers.BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16
+            bnb_4bit_compute_dtype=torch.float16,
         )
         # LoraConfig
         lora_config = LoraConfig(
@@ -49,26 +55,25 @@ class SLMModel(nn.Module):
             r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
-            target_modules=["q_proj", "v_proj"]
+            target_modules=["q_proj", "v_proj"],
         )
-    
+
         self.plm = transformers.AutoModelForSequenceClassification.from_pretrained(
-            pretrained_model_name_or_path=plm_name, 
-            num_labels=1, 
+            pretrained_model_name_or_path=plm_name,
+            num_labels=1,
             use_auth_token=False,
             quantization_config=bnb_config,
-            device_map="auto"
+            device_map="auto",
         )
 
         # k-bit 훈련 준비
         self.plm = prepare_model_for_kbit_training(self.plm)
-    
+
         for param in self.plm.score.parameters():
             param.requires_grad = True
-    
+
         # LoRA 적용
         self.plm = get_peft_model(self.plm, lora_config)
-    
 
     def forward(self, x):
         outputs = self.plm(x)
